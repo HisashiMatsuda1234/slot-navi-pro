@@ -1,159 +1,149 @@
 import streamlit as st
 import pandas as pd
 
-# スマホ（iPhone/Android）表示に最適化
+# ページ基本設定（ダークモード風・スマホ最適化）
 st.set_page_config(
-    page_title="スロット即判別ナビ Pro",
+    page_title="即判別ナビ Pro",
     page_icon="🎰",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# パチ屋の暗闇でも見やすいダーク系 ＆ タップしやすいデカボタンUI
+# カスタムCSSでプロ仕様のカードUI＆装飾を追加
 st.markdown("""
-    <style>
-    .stButton > button {
-        width: 100%;
-        height: 3.5rem;
-        font-size: 1.15rem !important;
-        font-weight: bold;
+<style>
+    .main { background-color: #0f172a; }
+    .stApp { max-width: 600px; margin: 0 auto; }
+    
+    /* カード風スタイリング */
+    .metric-card {
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        border: 1px solid #334155;
         border-radius: 12px;
-        background-color: #1F2937;
-        color: #FFFFFF;
-        border: 1px solid #374151;
+        padding: 16px;
+        text-align: center;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
     }
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 4px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 48px;
-        font-weight: bold;
-        font-size: 0.95rem;
-        border-radius: 8px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    .metric-title { color: #94a3b8; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px; }
+    .metric-value { color: #38bdf8; font-size: 1.6rem; font-weight: 800; }
+    .metric-sub { color: #f59e0b; font-size: 0.8rem; margin-top: 4px; }
+    
+    /* バッジ表示 */
+    .badge-danger { background-color: #ef4444; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+    .badge-success { background-color: #10b981; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+    .badge-warning { background-color: #f59e0b; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
+</style>
+""", unsafe_allow_html=True)
 
-# --- 発行されたスプレッドシートのCSV URL ---
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1uz8zjUxJUEIqw92yal84WL-ShOAMK_oNnKri6vnVq4MoYh-WB6Jd2gck6rawYpB6P-CXmyqqzJUP/pub?output=csv"
+# GoogleスプレッドシートのCSV URL（※お持ちのCSV URLを記載）
+CSV_URL = "https://docs.google.com/spreadsheets/d/11DuFP_w5Hl7883jA9rP-AY-9XvOXaBV8r-5HcPbxlws/gviz/tq?tqx=out:csv"
 
-@st.cache_data(ttl=300) # 5分ごとに自動更新
+@st.cache_data(ttl=60)
 def load_data():
-    df = pd.read_csv(SPREADSHEET_URL)
-    # 全列文字列型として読み込み（数値変換の不具合防止）
-    df = df.astype(str)
+    df = pd.read_csv(CSV_URL)
+    df = df.fillna("非該当・解析中")
     return df
 
 try:
-    df_machines = load_data()
-except Exception as e:
-    st.error("スプレッドシートの読み込みに失敗しました。URLをご確認ください。")
-    st.stop()
-
-# アプリヘッダー
-st.title("🎰 即判別ナビ Pro")
-
-# 1. 機種選択
-machine_list = df_machines["機種名"].tolist()
-selected_machine = st.selectbox("🎯 打ちたい機種を選択", machine_list)
-
-# 選択データの取得
-row = df_machines[df_machines["機種名"] == selected_machine].iloc[0]
-
-# 信頼度・更新日時の表示
-st.caption(f"🛡️ 信頼度: {row['情報の信頼度・データソース']} (更新: {row['最終更新日時']})")
-
-st.markdown("---")
-
-# 実戦フェーズ別 4大タブ
-tab1, tab2, tab3, tab4 = st.tabs(["🎯 打つ前", "🔍 滞在・打ち方", "🛑 やめ時・ツラヌキ", "📊 設定判別・パチンコ"])
-
-# --- TAB 1: 打つ前判定（狙い目・ボーダー） ---
-with tab1:
+    df = load_data()
+    
+    # ヘッダーエリア
+    st.markdown("<h1 style='text-align: center; color: #f8fafc; font-size: 1.8rem;'>🎰 即判別ナビ <span style='color: #ef4444;'>PRO</span></h1>", unsafe_allow_html=True)
+    st.caption("⚡ ホール実戦専用・即判別＆期待値ボーダー検索")
+    
+    # 機種選択ドロップダウン
+    machine_list = df["機種名"].tolist()
+    selected_machine = st.selectbox("🎯 打つ機種を選択してください", machine_list)
+    
+    # 選択機種データの抽出
+    row = df[df["機種名"] == selected_machine].iloc[0]
+    
+    # 画像表示（Y列「画像URL」があれば表示）
+    img_url = row.get("画像URL", None)
+    if img_url and str(img_url).startswith("http"):
+        st.image(img_url, use_column_width=True)
+    
+    st.divider()
+    
+    # ----------------------------------------------------
+    # 🧮 1. 即判別（簡易計算器）エリア
+    # ----------------------------------------------------
+    st.subheader("⚡ リアルタイム立ち回り判別")
+    
     col1, col2 = st.columns(2)
     with col1:
-        status = st.radio("設定変更", ["通常/不明", "朝一リセット"])
+        current_g = st.number_input("現在ゲーム数 (G)", min_value=0, max_value=2000, value=0, step=10)
     with col2:
-        exchange = st.radio("換金率", ["等価/持ちメダル", "5.6枚現金"])
+        current_diff = st.number_input("現在差枚数 (枚)", min_value=-5000, max_value=5000, value=0, step=100)
         
-    g_val = st.slider("現在のゲーム数 (G)", 0, 1500, 250, step=10)
-    
-    # ボーダー算出ロジック
+    # 天井G数の数値判定
     try:
-        raw_target = row["朝一リセット天井G"] if status == "朝一リセット" else row["通常天井G"]
-        base_target = int(''.join(filter(str.isdigit, str(raw_target))))
-    except ValueError:
-        base_target = 600
+        target_g = int(str(row["通常天井G"]).replace("G", "").replace("G+α", "").strip())
+        remain_g = target_g - current_g
         
-    if exchange == "5.6枚現金":
-        base_target += 50  # 現金投資時は自動でボーダーを50G厳しく計算
+        if remain_g <= 0:
+            st.error("🚨 【狙い目到達】天井直前・または即発動ラインです！")
+        elif remain_g <= 200:
+            st.warning(f"🔥 【打てる！】天井まであと {remain_g} G！推奨ボーダー内です。")
+        else:
+            st.info(f"⏳ 天井まであと {remain_g} G (通常天井: {row['通常天井G']})")
+    except:
+        st.write(f"📌 **通常天井:** {row['通常天井G']}")
+
+    st.divider()
+
+    # ----------------------------------------------------
+    # 📊 2. 重要指標のカード表示（ビジュアル重視）
+    # ----------------------------------------------------
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">朝一リセット天井</div>
+            <div class="metric-value">{row['朝一リセット天井G']}</div>
+            <div class="metric-sub">朝一狙い目</div>
+        </div>
+        """, unsafe_allow_html=True)
         
-    if g_val >= base_target:
-        st.success(f"🚀 **【 打てる！ 】 狙い目ライン到達**")
-        st.markdown(f"**ボーダー目安:** {base_target} G〜 （現在 +{g_val - base_target} G）")
-    elif g_val >= (base_target - 50):
-        st.warning(f"⚠️ **【 様子見 】 あと少しで狙い目**")
-        st.markdown(f"狙い目まであと **{base_target - g_val} G**")
-    else:
-        st.error(f"✋ **【 打つな 】 期待値マイナスゾーン**")
-        st.markdown(f"狙い目まであと **{base_target - g_val} G** 必要")
+    with col_b:
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">通常天井</div>
+            <div class="metric-value" style="color: #ef4444;">{row['通常天井G']}</div>
+            <div class="metric-sub">最大ハマリ</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.markdown("---")
-    with st.expander("📌 スルー数・ゾーン・天井恩恵の詳細"):
-        st.write(f"**スルー数狙い:** {row['スルー数別狙い目']}")
-        st.write(f"**ゾーン/スポット狙い:** {row['ゾーン・スポット狙いG']}")
-        st.write(f"**天井到達時の恩恵:** {row['天井恩恵・期待枚数']}")
-        st.write(f"**現金投資・非等価ボーダー補足:** {row['現金投資・非等価ボーダー']}")
-        st.write(f"**朝一のリセット判別:** {row['リセット判別方法']}")
+    # ----------------------------------------------------
+    # 📑 3. タブ別カテゴリ表示（見やすさUP）
+    # ----------------------------------------------------
+    tab1, tab2, tab3, tab4 = st.tabs(["🎯 狙い目・天井", "🔍 演出・示唆", "🛑 やめ時・ツラヌキ", "📊 設定判別"])
+    
+    with tab1:
+        st.markdown("### 🎯 天井・ゾーン狙い目")
+        st.success(f"**【天井恩恵】**\n\n{row['天井恩恵・期待枚数']}")
+        st.info(f"**【スルー数狙い】**\n\n{row['スルー数別狙い目']}")
+        st.warning(f"**【ゾーン・ピンポイント狙い】**\n\n{row['ゾーン・スポット狙いG']}")
+        st.write(f"💡 **現金・非等価ボーダー:** {row['現金投資・非等価ボーダー']}")
+        
+    with tab2:
+        st.markdown("### 🔍 画面・ボイス示唆まとめ")
+        st.write(f"👀 **アイキャッチ・演出:**\n{row['アイキャッチ・演出示唆']}")
+        st.write(f"🗣️ **ボイス・サブ液晶:**\n{row['ボイス・液晶示唆']}")
+        st.write(f"🏆 **終了画面・トロフィー:**\n{row['終了画面・トロフィー']}")
+        
+    with tab3:
+        st.markdown("### 🛑 やめ時＆有利区間（ツラヌキ）")
+        st.error(f"**【やめ時詳細】**\n\n{row['やめ時詳細']}")
+        st.write(f"🔄 **有利区間・ツラヌキ条件:**\n{row['有利区間・ツラヌキ条件']}")
+        st.write(f"⚡ **切断時恩恵:**\n{row['有利区間切断時の恩恵']}")
+        
+    with tab4:
+        st.markdown("### 📊 設定判別＆注意事項")
+        st.write(f"📈 **設定判別ポイント:**\n{row['設定判別ポイント']}")
+        st.write(f"⚠️ **立ち回り注意メモ:**\n{row['立ち回り要注意メモ']}")
+        st.write(f"🎰 **推奨打ち方:**\n{row['通常時の打ち方（推奨押し順）']}")
 
-# --- TAB 2: 滞在・打ち方・示唆 ---
-with tab2:
-    st.subheader("🎯 通常時の打ち方・レア役判別")
-    st.info(f"**【基本押し順】**\n\n{row['通常時の打ち方（推奨押し順）']}")
-    st.success(f"**【停止形・変則押し】**\n\n{row['レア役停止形・変則押し判別']}")
-    
-    st.markdown("---")
-    st.subheader("👁️ ステージ・アイキャッチ示唆")
-    st.write(row["アイキャッチ・演出示唆"])
-    
-    st.subheader("🗣️ サブ液晶・ボイス示唆")
-    st.write(row["ボイス・液晶示唆"])
-    
-    st.subheader("🌀 モード移行・高確挙動")
-    st.write(row["モード移行・滞在示唆"])
-
-# --- TAB 3: やめ時・ツラヌキ・有利区間 ---
-with tab3:
-    st.subheader("🛑 最適なやめ時（即やめ厳禁チェック）")
-    st.warning(row["やめ時詳細"])
-    
-    st.markdown("---")
-    st.subheader("🔥 有利区間切断（ツラヌキ）条件＆恩恵")
-    st.write(f"**切断条件:** {row['有利区間・ツラヌキ条件']}")
-    st.write(f"**差枚数によるボーダー変化:** {row['差枚別ボーダー変化']}")
-    st.write(f"**切断後の恩恵・次回狙い:** {row['有利区間切断時の恩恵']}")
-
-# --- TAB 4: 設定判別・パチンコ ---
-with tab4:
-    st.subheader("📊 トロフィー・終了画面")
-    st.info(row["終了画面・トロフィー"])
-    
-    st.subheader("🔢 重要設定判別要素")
-    st.write(row["設定判別ポイント"])
-    
-    st.subheader("⚠️ 立ち回り要注意メモ")
-    st.error(row["立ち回り要注意メモ"])
-    
-    st.markdown("---")
-    st.subheader("🎰 パチンコ情報（ボーダー・遊タイム）")
-    st.write(f"**回転率ボーダー:** {row['パチンコ・回転率ボーダー']}")
-    st.write(f"**遊タイム天井・狙い目:** {row['パチンコ・遊タイム天井＆狙い目']}")
-
-# --- 有料会員導線 (Stripe連携) ---
-st.markdown("---")
-with st.expander("👑 プレミアム会員（月額 500 円 / 7日間無料体験）"):
-    st.write("・有利区間ツラヌキ『リアルタイム差枚自動計算機』の解放")
-    st.write("・全最新台のデータ更新が導入当日に即時反映")
-    st.write("・自分だけのマイホール設定傾向・クセ保存メモ機能")
-    if st.button("7日間無料でプレミアム版を試す"):
-        st.write("※ Stripe決済ページ（安全な決済システム）へ遷移します")
+except Exception as e:
+    st.error(f"データの読み込み中にエラーが発生しました: {e}")
