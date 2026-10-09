@@ -36,8 +36,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# GoogleスプレッドシートのCSV URL（※お持ちのCSV URLを記載）
-CSV_URL = "https://docs.google.com/spreadsheets/d/11DuFP_w5Hl7883jA9rP-AY-9XvOXaBV8r-5HcPbxlws/gviz/tq?tqx=out:csv"
+# 修正済みGoogleスプレッドシートの公開CSV URL
+CSV_URL = "https://docs.google.com/spreadsheets/d/11DuFP_w5Hl7883jA9rP-AY-9XvOXaBV8r-5HcPbxlws/pub?output=csv"
 
 @st.cache_data(ttl=60)
 def load_data():
