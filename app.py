@@ -28,16 +28,11 @@ st.markdown("""
     .metric-title { color: #94a3b8; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px; }
     .metric-value { color: #38bdf8; font-size: 1.6rem; font-weight: 800; }
     .metric-sub { color: #f59e0b; font-size: 0.8rem; margin-top: 4px; }
-    
-    /* バッジ表示 */
-    .badge-danger { background-color: #ef4444; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
-    .badge-success { background-color: #10b981; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
-    .badge-warning { background-color: #f59e0b; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
-# 修正済みGoogleスプレッドシートの公開CSV URL
-CSV_URL = "https://docs.google.com/spreadsheets/d/11DuFP_w5Hl7883jA9rP-AY-9XvOXaBV8r-5HcPbxlws/pub?output=csv"
+# 動作確認済み・GoogleスプレッドシートWeb公開CSV URL
+CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1uz8zjUxJUEIqw92yal84WL-ShOAMK_oNnKri6vnVq4MoYh-WB6Jd2gck6rawYpB6P-CXmyqqzJUP/pub?output=csv"
 
 @st.cache_data(ttl=60)
 def load_data():
